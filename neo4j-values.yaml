@@ -1,0 +1,11 @@
+neo4j:
+  name: neo4j
+  acceptLicenseAgreement: "yes"
+  password: "project1phase2"
+  extraConfig: |
+    dbms.security.procedures.unrestricted=gds.*
+    dbms.default_listen_address=0.0.0.0
+    dbms.default_advertised_address=0.0.0.0
+volumes:
+  data:
+    mode: defaultStorageClass

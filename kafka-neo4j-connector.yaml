@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kafka-neo4j-connector
+data:
+  KAFKA_BOOTSTRAP_SERVERS: "kafka-service:29092"
+  NEO4J_URI: "bolt://neo4j-service:7687"
+  NEO4J_USERNAME: "neo4j"
+  NEO4J_PASSWORD: "project1phase2"
+  TOPIC_NAME: "document-stream"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-neo4j-connector
+  labels:
+    app: kafka-neo4j-connector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka-neo4j-connector
+  template:
+    metadata:
+      labels:
+        app: kafka-neo4j-connector
+    spec:
+      containers:
+        - name: kafka-neo4j-connector
+          image: veedata/kafka-neo4j-connect:latest
+          ports:
+            - containerPort: 8083
+          envFrom:
+            - configMapRef:
+                name: kafka-neo4j-connector-config
+          resources:
+            limits:
+              memory: "1.5Gi"
+              cpu: "750m"
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8083
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8083
+            initialDelaySeconds: 30
+            periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-neo4j-connector-service
+  labels:
+    app: kafka-neo4j-connector
+spec:
+  selector:
+    app: kafka-neo4j-connector
+  ports:
+    - protocol: TCP
+      port: 8083
+      targetPort: 8083
+  type: ClusterIP
